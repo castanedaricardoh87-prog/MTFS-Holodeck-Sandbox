@@ -14,7 +14,9 @@ Reproducible AI-agent experiments
 Important scientific boundary
 The magnetic-dipole and Rabi–Bloch components are computational models. Results in this repository describe behavior within the implemented simulator; they are not claims of a new physical law, quantum advantage, or physical quantum-computing device.
 Architecture
-┌─────────────────────┐
+
+
+                  ┌─────────────────────┐
                   │       AI AGENT      │
                   │  Observe → Reason   │
                   │     → Choose        │
@@ -84,12 +86,14 @@ python experiments/run_smoke_test.py
 python experiments/run_rabi_bloch.py
 The skeleton is intentionally small. The goal is to provide a clean research foundation into which the existing MTFS Holodeck experiments can be migrated without obscuring the experimental record.
 Core observation
-The sandbox tracks a structured state:
+The sandbox tracks a structured state: 
+
 [ S = [E,G,C,\Phi,\kappa,A,I,M] ]
 and distinguishes energetic activity from geometric activity:
 [ D_E = |\Delta E|,\qquad D_G = ||\Delta\kappa|| ]
 with the bounded separation score:
 [ S_{EG} = \frac{D_G-D_E}{D_G+D_E+\epsilon}. ]
+
 The 9:1 regime is an operational simulator-defined regime, not a physical constant.
 Research philosophy
 If an experiment produces an exciting result, try to break it.
