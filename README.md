@@ -48,6 +48,8 @@ Architecture
                        STATE + ΔSTATE
                              │
                              └──────────► AI
+
+
 Repository layout
 MTFS-HoloDeck/
 ├── README.md
@@ -77,6 +79,8 @@ MTFS-HoloDeck/
 │   └── run_rabi_bloch.py
 └── results/
     └── .gitkeep
+
+    
 Quick start
 python -m venv .venv
 source .venv/bin/activate       # Windows: .venv\Scripts\activate
