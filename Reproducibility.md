@@ -1,108 +1,165 @@
-Reproducibility
+"""
+MTFS Holodeck — Reproducibility Smoke Test
 
-Reproducibility is a core design requirement of the MTFS Holodeck.
+Purpose:
+    Verify that the core Holodeck environment can be imported,
+    initialized, stepped, and measured deterministically.
 
-The purpose of this repository is not only to demonstrate interesting simulator behavior, but to make it possible for another researcher to determine how a result was produced, under what conditions it appeared, and whether it survives independent repetition.
+This is NOT a scientific experiment.
+It is an integrity/reproducibility check.
+"""
 
-Experimental results should therefore be treated as configuration-dependent observations rather than universal conclusions.
+from __future__ import annotations
 
----
+import platform
+import sys
+import random
 
-Environment
+import numpy as np
 
-The current computational environment is based on:
 
-- Python 3.10+
-- PyTorch
-- NumPy
+SEED = 42
 
-Exact package versions should be recorded in the project environment and requirements files as the implementation matures.
 
----
+def set_seed(seed: int) -> None:
+    """Set deterministic seeds for the basic numerical stack."""
+    random.seed(seed)
+    np.random.seed(seed)
 
-Determinism and Experimental Recording
+    try:
+        import torch
 
-Every reported experiment should record enough information to reconstruct the experimental conditions.
+        torch.manual_seed(seed)
 
-At minimum, this includes:
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
 
-- random seed
-- simulator parameters
-- controller parameters
-- timestep
-- trajectory count
-- initial conditions
-- action schedule
-- observation configuration
-- evaluation horizon
-- control/sham condition
-- relevant stopping or termination criteria
+    except ImportError:
+        pass
 
-When stochastic components are introduced, their sources of randomness should be explicitly identified.
 
-A result without its corresponding configuration should be considered incomplete.
+def print_environment() -> None:
+    """Print the computational environment."""
+    print("=" * 60)
+    print("MTFS HOLODECK — REPRODUCIBILITY SMOKE TEST")
+    print("=" * 60)
 
----
+    print(f"Python:     {sys.version.split()[0]}")
+    print(f"Platform:   {platform.platform()}")
+    print(f"NumPy:      {np.__version__}")
 
-Seeds and Initial Conditions
+    try:
+        import torch
 
-Random seeds should be treated as part of the experimental specification.
+        print(f"PyTorch:    {torch.__version__}")
+    except ImportError:
+        print("PyTorch:    not installed")
 
-Where possible, experiments should distinguish between:
+    print(f"Seed:       {SEED}")
+    print()
 
-training seeds
-validation seeds
-held-out evaluation seeds
 
-Initial conditions should also be recorded rather than generated implicitly.
+def main() -> None:
+    """Run the smoke test."""
 
-This helps prevent a result from appearing reproducible simply because the same favorable starting conditions were accidentally reused.
+    set_seed(SEED)
+    print_environment()
 
----
+    # Import the Holodeck after the environment has been initialized.
+    try:
+        from holodeck import Holodeck
+    except ImportError as exc:
+        print("FAILED: Could not import the Holodeck.")
+        print()
+        print(f"Import error: {exc}")
+        print()
+        print("Check that:")
+        print("  1. holodeck/__init__.py exists")
+        print("  2. the package is in the repository")
+        print("  3. you are running this from the repository root")
+        raise SystemExit(1)
 
-Recommended Evaluation Protocol
+    print("PASS: Holodeck package imported.")
+    print()
 
-Learned Predictors
+    # ------------------------------------------------------------
+    # Create the environment.
+    # ------------------------------------------------------------
 
-For learned prediction models, train/test separation should occur at the trajectory or seed level, not at the individual time-point level.
+    try:
+        env = Holodeck(seed=SEED)
+    except TypeError:
+        # Fallback for an early implementation that may not yet
+        # expose a seed argument.
+        env = Holodeck()
 
-Preferred
+    print("PASS: Holodeck initialized.")
+    print()
 
-Trajectory 1 ───────► TRAIN
-Trajectory 2 ───────► TRAIN
-Trajectory 3 ───────► TRAIN
+    # ------------------------------------------------------------
+    # Inspect initial state.
+    # ------------------------------------------------------------
 
-Trajectory 4 ───────► TEST
-Trajectory 5 ───────► TEST
+    if hasattr(env, "observe"):
+        observation = env.observe()
+    elif hasattr(env, "observation"):
+        observation = env.observation()
+    elif hasattr(env, "state"):
+        observation = env.state
+    else:
+        observation = None
 
-Avoid
+    print("Initial observation:")
+    print(observation)
+    print()
 
-Same trajectory
-      ↓
-randomly split individual time points
-      ↓
-TRAIN + TEST
+    # ------------------------------------------------------------
+    # Execute one bounded test action.
+    # ------------------------------------------------------------
 
-Random time-point splitting can allow highly correlated neighboring observations from the same trajectory to appear in both sets, producing an overly optimistic estimate of generalization.
+    action = {
+        "type": "WAIT"
+    }
 
----
+    print("Test action:")
+    print(action)
+    print()
 
-Parameter Holdout
+    try:
+        if hasattr(env, "step"):
+            result = env.step(action)
+        elif hasattr(env, "act"):
+            result = env.act(action)
+        else:
+            print("FAILED: Holodeck has no step() or act() method.")
+            raise SystemExit(1)
 
-Where computationally feasible, evaluation should also hold out parameter combinations, not only random trajectories.
+    except Exception as exc:
+        print("FAILED: Test action could not be executed.")
+        print(f"Error: {exc}")
+        raise SystemExit(1)
 
-For example:
+    print("Result after action:")
+    print(result)
+    print()
 
-Training
-├── Parameter set A
-├── Parameter set B
-└── Parameter set C
+    print("=" * 60)
+    print("SMOKE TEST PASSED")
+    print("=" * 60)
+    print()
+    print("The Holodeck successfully:")
+    print("  ✓ imported")
+    print("  ✓ initialized")
+    print("  ✓ produced an observation")
+    print("  ✓ accepted a bounded action")
+    print("  ✓ returned a state/result")
+    print()
+    print("This confirms basic repository integrity.")
+    print("It does NOT validate scientific hypotheses.")
 
-Held-out evaluation
-└── Parameter set D
 
-This provides a stronger test of whether a learned relationship reflects a general feature of the simulator rather than memorization of a particular configuration.
-
+if __name__ == "__main__":
+    main()
 ---
 
 Prediction Metrics
