@@ -1,0 +1,17 @@
+results/
+├── .gitkeep
+├── prototype_4/
+│   └── .gitkeep
+├── prototype_5/
+│   ├── stage_a/
+│   │   └── .gitkeep
+│   └── stage_b/
+│       └── .gitkeep
+├── rabi_bloch/
+│   └── .gitkeep
+├── trajectories/
+│   └── .gitkeep
+├── metrics/
+│   └── .gitkeep
+└── figures/
+    └── .gitkeep
